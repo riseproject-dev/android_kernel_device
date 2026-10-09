@@ -149,6 +149,13 @@ ALIBABA_IN_TREE_MODULES_PATH = [
     "drivers/net/wireless/realtek/rtw88/rtw88_sdio.ko",
     "drivers/net/wireless/realtek/rtw88/rtw88_8822c.ko",
     "drivers/net/wireless/realtek/rtw88/rtw88_8822cs.ko",
+    "drivers/dma/dw-axi-dmac/dw-axi-dmac-platform.ko",
+    "sound/soc/generic/snd-soc-simple-card-utils.ko",
+    "sound/soc/generic/snd-soc-audio-graph-card2.ko",
+    "sound/soc/zhihe/snd-soc-zhihe-pcm.ko",
+    "sound/soc/zhihe/snd-soc-zhihe-i2s.ko",
+    "sound/soc/codecs/snd-soc-es8156.ko",
+    "sound/soc/codecs/snd-soc-es7210.ko",
 ]
 
 # ============================================================
@@ -202,6 +209,13 @@ ALIBABA_VENDOR_DLKM_MODULES = [
     "dw-hdmi.ko",
     "drm_dma_helper.ko",
     "drm_display_helper.ko",
+    "dw-axi-dmac-platform.ko",
+    "snd-soc-simple-card-utils.ko",
+    "snd-soc-audio-graph-card2.ko",
+    "snd-soc-zhihe-pcm.ko",
+    "snd-soc-zhihe-i2s.ko",
+    "snd-soc-es8156.ko",
+    "snd-soc-es7210.ko",
 ]
 
 # ============================================================
