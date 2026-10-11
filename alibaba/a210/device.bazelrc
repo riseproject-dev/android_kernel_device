@@ -1,0 +1,15 @@
+# ZhiHe A210 device bazelrc
+#
+# Usage:
+#   ln -sf devices/rise/alibaba/a210/device.bazelrc device.bazelrc
+#   tools/bazel run //devices/rise/alibaba/a210:zhihe_a210
+#
+# Or with explicit device config:
+#   tools/bazel build --config=zhihe_a210 //devices/rise/alibaba/a210:zhihe_a210
+
+# Local build (disable sandboxing).
+build:zhihe_a210 --config=local
+
+# RISC-V target platform. @platforms//cpu:riscv64 is only a constraint_value;
+# kleaf provides the actual riscv64 platform via the android_riscv64 config.
+build:zhihe_a210 --config=android_riscv64

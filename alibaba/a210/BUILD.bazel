@@ -1,0 +1,442 @@
+# Copyright (C) 2026 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_pkg//pkg:install.bzl", "pkg_install")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load(
+    "//build/kernel/kleaf:kernel.bzl",
+    "initramfs",
+    "kernel_build",
+    "kernel_modules_install",
+    "vendor_dlkm_image",
+)
+load(
+    "//common:bazel/modules.bzl",
+    "get_gki_modules_list",
+    "get_kunit_modules_list",
+)
+
+# ============================================================
+# GKI modules list (for the system_dlkm dist split below)
+# ============================================================
+ALIBABA_GKI_MODULES = [
+    "drivers/block/virtio_blk.ko",
+    "drivers/block/zram/zram.ko",
+    "drivers/bluetooth/btbcm.ko",
+    "drivers/bluetooth/btqca.ko",
+    "drivers/bluetooth/btsdio.ko",
+    "drivers/bluetooth/hci_uart.ko",
+    "drivers/char/virtio_console.ko",
+    "drivers/gnss/gnss.ko",
+    "drivers/misc/vcpu_stall_detector.ko",
+    "drivers/net/can/dev/can-dev.ko",
+    "drivers/net/can/slcan/slcan.ko",
+    "drivers/net/can/vcan.ko",
+    "drivers/net/macsec.ko",
+    "drivers/net/mii.ko",
+    "drivers/net/ppp/bsd_comp.ko",
+    "drivers/net/ppp/ppp_deflate.ko",
+    "drivers/net/ppp/ppp_generic.ko",
+    "drivers/net/ppp/ppp_mppe.ko",
+    "drivers/net/ppp/pppox.ko",
+    "drivers/net/ppp/pptp.ko",
+    "drivers/net/slip/slhc.ko",
+    "drivers/net/usb/aqc111.ko",
+    "drivers/net/usb/asix.ko",
+    "drivers/net/usb/ax88179_178a.ko",
+    "drivers/net/usb/cdc_eem.ko",
+    "drivers/net/usb/cdc_ether.ko",
+    "drivers/net/usb/cdc_ncm.ko",
+    "drivers/net/usb/r8152.ko",
+    "drivers/net/usb/r8153_ecm.ko",
+    "drivers/net/usb/rtl8150.ko",
+    "drivers/net/usb/usbnet.ko",
+    "drivers/net/wwan/wwan.ko",
+    "drivers/pps/pps_core.ko",
+    "drivers/ptp/ptp.ko",
+    "drivers/thunderbolt/thunderbolt.ko",
+    "drivers/usb/class/cdc-acm.ko",
+    "drivers/usb/mon/usbmon.ko",
+    "drivers/usb/serial/ftdi_sio.ko",
+    "drivers/usb/serial/usbserial.ko",
+    "drivers/virtio/virtio_balloon.ko",
+    "drivers/virtio/virtio_pci.ko",
+    "drivers/virtio/virtio_pci_legacy_dev.ko",
+    "drivers/virtio/virtio_pci_modern_dev.ko",
+    "fs/netfs/netfs.ko",
+    "kernel/kheaders.ko",
+    "lib/crc/crc-ccitt.ko",
+    "lib/crypto/libarc4.ko",
+    "mm/zsmalloc.ko",
+    "net/6lowpan/6lowpan.ko",
+    "net/6lowpan/nhc_dest.ko",
+    "net/6lowpan/nhc_fragment.ko",
+    "net/6lowpan/nhc_hop.ko",
+    "net/6lowpan/nhc_ipv6.ko",
+    "net/6lowpan/nhc_mobility.ko",
+    "net/6lowpan/nhc_routing.ko",
+    "net/6lowpan/nhc_udp.ko",
+    "net/8021q/8021q.ko",
+    "net/9p/9pnet.ko",
+    "net/9p/9pnet_fd.ko",
+    "net/bluetooth/bluetooth.ko",
+    "net/bluetooth/hidp/hidp.ko",
+    "net/bluetooth/rfcomm/rfcomm.ko",
+    "net/can/can.ko",
+    "net/can/can-bcm.ko",
+    "net/can/can-gw.ko",
+    "net/can/can-raw.ko",
+    "net/ieee802154/6lowpan/ieee802154_6lowpan.ko",
+    "net/ieee802154/ieee802154.ko",
+    "net/ieee802154/ieee802154_socket.ko",
+    "net/ipv4/tcp_bbr.ko",
+    "net/l2tp/l2tp_core.ko",
+    "net/l2tp/l2tp_ppp.ko",
+    "net/mac80211/mac80211.ko",
+    "net/mac802154/mac802154.ko",
+    "net/nfc/nfc.ko",
+    "net/rfkill/rfkill.ko",
+    "net/tipc/tipc.ko",
+    "net/tipc/tipc_diag.ko",
+    "net/tls/tls.ko",
+    "net/vmw_vsock/vmw_vsock_virtio_transport.ko",
+    "net/wireless/cfg80211.ko",
+]
+
+# ============================================================
+# In-tree modules
+# ============================================================
+ALIBABA_IN_TREE_MODULES_PATH = [
+    "drivers/clk/zhihe/zhihe-clk-core.ko",
+    "drivers/clk/zhihe/clk-a210.ko",
+    "drivers/reset/reset-a210.ko",
+    "drivers/pinctrl/pinctrl-a210.ko",
+    "drivers/pmdomain/zhihe/a210-pd.ko",
+    "drivers/gpio/gpio-dwapb.ko",
+    "drivers/mmc/host/sdhci-of-dwcmshc.ko",
+    "drivers/mmc/host/cqhci.ko",
+    "drivers/watchdog/dw_wdt.ko",
+    "drivers/phy/zhihe/phy-zhihe-snps-usb2.ko",
+    "drivers/phy/zhihe/phy-zhihe-snps-c10phy.ko",
+    "drivers/i2c/busses/i2c-designware-core.ko",
+    "drivers/i2c/busses/i2c-designware-platform.ko",
+    "drivers/gpio/gpio-pca953x.ko",
+    "drivers/usb/dwc2/dwc2.ko",
+    "drivers/gpu/drm/verisilicon/verisilicon-dc.ko",
+    "drivers/gpu/drm/bridge/th1520-dw-hdmi.ko",
+    "drivers/gpu/drm/bridge/display-connector.ko",
+    "drivers/gpu/drm/bridge/synopsys/dw-hdmi.ko",
+    "drivers/gpu/drm/drm_dma_helper.ko",
+    "drivers/gpu/drm/display/drm_display_helper.ko",
+    "drivers/gpu/drm/drm_exec.ko",
+    "drivers/gpu/drm/drm_gpuvm.ko",
+    "drivers/gpu/drm/scheduler/gpu-sched.ko",
+    "drivers/gpu/drm/imagination/powervr.ko",
+    "drivers/mmc/core/pwrseq_simple.ko",
+    "drivers/net/wireless/realtek/rtw88/rtw88_core.ko",
+    "drivers/net/wireless/realtek/rtw88/rtw88_sdio.ko",
+    "drivers/net/wireless/realtek/rtw88/rtw88_8822c.ko",
+    "drivers/net/wireless/realtek/rtw88/rtw88_8822cs.ko",
+]
+
+# ============================================================
+# system_dlkm extra modules: non-GKI modules that still belong in
+# system_dlkm rather than vendor_boot/vendor_dlkm, because they're
+# generic/hardware-independent (no early-boot or vendor-hardware
+# dependency) - just not part of upstream's official GKI module list.
+# ============================================================
+ALIBABA_SYSTEM_DLKM_EXTRA_MODULES = [
+    "drivers/gpu/drm/vkms/vkms.ko",
+]
+
+# ============================================================
+# Vendor Boot modules
+# ============================================================
+ALIBABA_VENDOR_BOOT_MODULES = [
+    "zhihe-clk-core.ko",
+    "clk-a210.ko",
+    "reset-a210.ko",
+    "pinctrl-a210.ko",
+    "a210-pd.ko",
+    "gpio-dwapb.ko",
+    "cqhci.ko",
+    "sdhci-of-dwcmshc.ko",
+    "dw_wdt.ko",
+]
+
+# ============================================================
+# Vendor DLKM modules
+# ============================================================
+ALIBABA_VENDOR_DLKM_MODULES = [
+    "drm_exec.ko",
+    "drm_gpuvm.ko",
+    "gpu-sched.ko",
+    "powervr.ko",
+    "pwrseq_simple.ko",
+    "rtw88_core.ko",
+    "rtw88_sdio.ko",
+    "rtw88_8822c.ko",
+    "rtw88_8822cs.ko",
+    "phy-zhihe-snps-usb2.ko",
+    "phy-zhihe-snps-c10phy.ko",
+    "i2c-designware-core.ko",
+    "i2c-designware-platform.ko",
+    "gpio-pca953x.ko",
+    "dwc2.ko",
+    "verisilicon-dc.ko",
+    "th1520-dw-hdmi.ko",
+    "display-connector.ko",
+    "dw-hdmi.ko",
+    "drm_dma_helper.ko",
+    "drm_display_helper.ko",
+]
+
+# ============================================================
+# Kernel Build
+# ============================================================
+ALIBABA_OUTS = [
+    "Image",
+    "Image.gz",
+    "System.map",
+    "modules.builtin",
+    "modules.builtin.modinfo",
+    "vmlinux",
+    "vmlinux.symvers",
+    # Device Tree Blobs
+    "arch/riscv/boot/dts/zhihe/a210-evb.dtb",
+]
+
+kernel_build(
+    name = "zhihe_a210",
+    srcs = ["//common:kernel_riscv64_sources"],
+    outs = ALIBABA_OUTS,
+    arch = "riscv64",
+    defconfig = "//common:arch/riscv/configs/gki_defconfig",
+    make_goals = [
+        "Image",
+        "Image.gz",
+        "modules",
+        "zhihe/a210-evb.dtb",
+    ],
+    makefile = "//common:Makefile",
+    module_outs = get_gki_modules_list("riscv64") +
+                  get_kunit_modules_list("riscv64") +
+                  ALIBABA_IN_TREE_MODULES_PATH +
+                  ALIBABA_SYSTEM_DLKM_EXTRA_MODULES,
+    pahole = "//common:pahole",
+    pre_defconfig_fragments = [":zhihe_a210.fragment"],
+    visibility = ["//visibility:public"],
+)
+
+# ============================================================
+# Modules Install
+# ============================================================
+kernel_modules_install(
+    name = "zhihe_a210_modules_install",
+    kernel_build = ":zhihe_a210",
+)
+
+# ============================================================
+# Module Lists (for Android module loading)
+# ============================================================
+write_file(
+    name = "zhihe_a210_vendor_boot_modules_list",
+    out = "vendor_boot_modules.zhihe_a210",
+    content = ALIBABA_VENDOR_BOOT_MODULES,
+)
+
+write_file(
+    name = "zhihe_a210_vendor_dlkm_modules_list",
+    out = "vendor_dlkm_modules.zhihe_a210",
+    content = ALIBABA_VENDOR_DLKM_MODULES,
+)
+
+# ============================================================
+# Initramfs (vendor_boot ramdisk)
+# ============================================================
+initramfs(
+    name = "zhihe_a210_initramfs",
+    kernel_modules_install = ":zhihe_a210_modules_install",
+    modules_list = ":zhihe_a210_vendor_boot_modules_list",
+    ramdisk_compression = "lz4",
+    trim_unused_modules = True,
+    vendor_boot_name = "vendor_boot",
+)
+
+# ============================================================
+# Vendor DLKM image (ext4 partition with vendor modules)
+# ============================================================
+vendor_dlkm_image(
+    name = "zhihe_a210_vendor_dlkm_image",
+    build_flatten = True,
+    kernel_modules_install = ":zhihe_a210_modules_install",
+    modules_list = ":zhihe_a210_vendor_dlkm_modules_list",
+    vendor_boot_modules_load = ":zhihe_a210_initramfs",
+)
+
+# ============================================================
+# Package files for distribution
+# ============================================================
+
+# Kernel image, System.map, modules.builtin, and DTBs (flattened).
+pkg_files(
+    name = "zhihe_a210_pkg_files",
+    srcs = [":zhihe_a210/" + o for o in ALIBABA_OUTS],
+    strip_prefix = strip_prefix.files_only(),
+)
+
+# Package individual .ko files for distribution
+pkg_files(
+    name = "zhihe_a210_ramdisk_modules_pkg_files",
+    srcs = [":zhihe_a210_ramdisk_modules_filtered"],
+    prefix = "ramdisk",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+pkg_files(
+    name = "zhihe_a210_vendor_dlkm_modules_pkg_files",
+    srcs = [":zhihe_a210_vendor_dlkm_modules_filtered"],
+    prefix = "vendor_dlkm",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+pkg_files(
+    name = "zhihe_a210_system_dlkm_modules_pkg_files",
+    srcs = [":zhihe_a210_system_dlkm_modules_filtered"],
+    prefix = "system_dlkm",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+# Actual vendor_dlkm.img / vendor_dlkm.flatten.img, for reference/verification
+# (the flat .ko dump above is what the AOSP device tree actually consumes).
+pkg_files(
+    name = "zhihe_a210_vendor_dlkm_image_pkg_files",
+    srcs = [":zhihe_a210_vendor_dlkm_image"],
+    prefix = "vendor_dlkm",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+# Initramfs (initramfs.img, modules.load, vendor_boot.modules.load), for
+# reference/verification - lets you inspect the vendor_boot ramdisk's raw
+# contents and module load order directly, without extracting them from
+# vendor_boot.img.
+pkg_files(
+    name = "zhihe_a210_initramfs_pkg_files",
+    srcs = [":zhihe_a210_initramfs"],
+    prefix = "initramfs",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+# ============================================================
+# Genrules to extract individual modules from kernel_build outputs into
+# per-partition subdirectories.
+# ============================================================
+
+# Extract vendor boot / ramdisk modules (SoC-critical early boot: clock,
+# reset, pinctrl, power domain, GPIO, eMMC/SD, watchdog)
+genrule(
+    name = "zhihe_a210_ramdisk_modules_filtered",
+    srcs = [":zhihe_a210"],
+    outs = ["ramdisk_ko/" + mod for mod in ALIBABA_VENDOR_BOOT_MODULES],
+    cmd = """
+        declare -A MODMAP
+        for f in $(SRCS); do
+            b=$$(basename "$$f")
+            [[ "$$b" == *.ko ]] && MODMAP["$$b"]="$$f"
+        done
+        for out in $(OUTS); do
+            modname=$$(basename "$$out")
+            src="$${MODMAP[$$modname]:-}"
+            if [ -n "$$src" ]; then
+                cp "$$src" "$$out"
+            else
+                echo "ERROR: Module $$modname not found in kernel build" >&2
+                exit 1
+            fi
+        done
+    """,
+)
+
+# Extract vendor DLKM modules (loaded after boot from eMMC: USB3.1 gadget,
+# not needed to mount rootfs or in recovery - see ALIBABA_VENDOR_DLKM_MODULES)
+genrule(
+    name = "zhihe_a210_vendor_dlkm_modules_filtered",
+    srcs = [":zhihe_a210"],
+    outs = ["vendor_dlkm_ko/" + mod for mod in ALIBABA_VENDOR_DLKM_MODULES],
+    cmd = """
+        declare -A MODMAP
+        for f in $(SRCS); do
+            b=$$(basename "$$f")
+            [[ "$$b" == *.ko ]] && MODMAP["$$b"]="$$f"
+        done
+        for out in $(OUTS); do
+            modname=$$(basename "$$out")
+            src="$${MODMAP[$$modname]:-}"
+            if [ -n "$$src" ]; then
+                cp "$$src" "$$out"
+            else
+                echo "ERROR: Module $$modname not found in kernel build" >&2
+                exit 1
+            fi
+        done
+    """,
+)
+
+# Extract system DLKM modules (generic GKI modules + the non-GKI
+# ALIBABA_SYSTEM_DLKM_EXTRA_MODULES; kunit test modules are
+# deliberately excluded here: they are not restaged by this dist target
+# and are never packaged into system_dlkm).
+genrule(
+    name = "zhihe_a210_system_dlkm_modules_filtered",
+    srcs = [":zhihe_a210"],
+    outs = ["system_dlkm_ko/" + mod.split("/")[-1] for mod in ALIBABA_GKI_MODULES + ALIBABA_SYSTEM_DLKM_EXTRA_MODULES],
+    cmd = """
+        declare -A MODMAP
+        for f in $(SRCS); do
+            b=$$(basename "$$f")
+            [[ "$$b" == *.ko ]] && MODMAP["$$b"]="$$f"
+        done
+        for out in $(OUTS); do
+            modname=$$(basename "$$out")
+            src="$${MODMAP[$$modname]:-}"
+            if [ -n "$$src" ]; then
+                cp "$$src" "$$out"
+            else
+                echo "ERROR: Module $$modname not found in kernel build" >&2
+                exit 1
+            fi
+        done
+    """,
+)
+
+# ============================================================
+# Distribution target
+# ============================================================
+pkg_install(
+    name = "zhihe_a210_dist",
+    srcs = [
+        # Kernel images, System.map, and DTBs
+        ":zhihe_a210_pkg_files",
+        # Modules, organized into ramdisk/, vendor_dlkm/ and system_dlkm/
+        ":zhihe_a210_ramdisk_modules_pkg_files",
+        ":zhihe_a210_vendor_dlkm_modules_pkg_files",
+        ":zhihe_a210_system_dlkm_modules_pkg_files",
+        # vendor_dlkm.img / vendor_dlkm.flatten.img
+        ":zhihe_a210_vendor_dlkm_image_pkg_files",
+        # initramfs.img / modules.load / vendor_boot.modules.load
+        ":zhihe_a210_initramfs_pkg_files",
+    ],
+    destdir = "out/zhihe_a210/dist",
+)

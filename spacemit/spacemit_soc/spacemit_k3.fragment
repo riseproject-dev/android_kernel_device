@@ -1,12 +1,8 @@
 # SpacemiT K3 fragment for Android GKI
 # Base: arch/riscv/configs/gki_defconfig
-#
-# Usage:
-#   ./scripts/kconfig/merge_config.sh arch/riscv/configs/gki_defconfig arch/riscv/configs/spacemit_k3.fragment
-#
-# Principe: TOUS les drivers en module (=m)
-# L'initramfs Android charge les modules essentiels pour boot (clock, pinctrl, mmc, etc.)
-# ARCH_SPACEMIT est builtin dans gki_defconfig
+# Used by //devices/rise/spacemit/spacemit_soc:spacemit_k3.
+# Board peripherals are modules; Android loads storage drivers from vendor_boot.
+# ARCH_SPACEMIT is enabled by gki_defconfig.
 
 # ============================================================
 # Timer tick — bump HZ from 250 (RISC-V default) to 1000
@@ -284,29 +280,12 @@ CONFIG_PHY_SPACEMIT_K3_USB3=m
 CONFIG_TYPEC_FUSB301=m
 
 # ============================================================
-# GPU/DRM (module) - Ported from Buildroot
+# K3 Saturn DPU and Innosilicon DP/eDP bridge
 # ============================================================
 CONFIG_DRM_SPACEMIT=m
-CONFIG_SPACEMIT_MIPI_PANEL=m
-CONFIG_SPACEMIT_HDMI=m
-CONFIG_DRM_LT8911EXB=m
-CONFIG_DRM_LT9711=m
-CONFIG_DRM_RASPBERRYPI_TOUCHSCREEN=m
-
-# ============================================================
-# K3 (saturn-hee) display — SEPARATE from the K1 spacemit-drm
-# stack above. Distinct hardware revision, built as its own
-# module(s); does not touch CONFIG_DRM_SPACEMIT / spacemit-drm.ko.
-# ============================================================
-CONFIG_DRM_SPACEMIT_K3=m
+CONFIG_DRM_FBDEV_EMULATION=y
 CONFIG_SPACEMIT_INNO_DP=m
-# K3 DPU master + CRTC (scan-out) — builds spacemit-drm-k3.ko. Calls
-# component_bind_all() so the K3 DSI/DPHY/DP sub-drivers attach. No K3
-# pmdomain provider on this tree, so SPACEMIT_NI700 stays off (guarded).
-CONFIG_DRM_SPACEMIT_K3_DPU=m
-# IMG Rogue GPU driver - external module in devices/spacemit/modules/img-rogue/
-# CONFIG_DRM_POWERVR=m  <- upstream driver, NOT compatible with K1-X GPU
-# CONFIG_POWERVR_ROGUE will be built as external ddk_module
+CONFIG_PHY_SPACEMIT_K3_INNO_DP=m
 
 # ============================================================
 # Media/Camera (module) - Ported from Buildroot

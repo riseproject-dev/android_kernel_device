@@ -1,11 +1,11 @@
-# SpacemiT K3 device bazelrc
+# SpacemiT K3 Pico-ITX device bazelrc
 #
 # Usage:
-#   ln -sf devices/spacemit/spacemit_soc/device.bazelrc device.bazelrc
-#   tools/bazel run //devices/spacemit/spacemit_soc:spacemit_k3_dist
+#   ln -sf devices/rise/spacemit/spacemit_soc/device.bazelrc device.bazelrc
+#   tools/bazel run //devices/rise/spacemit/spacemit_soc:spacemit_k3_dist
 #
 # Or with explicit device config:
-#   tools/bazel run --config=spacemit_k3 //devices/spacemit/spacemit_soc:spacemit_k3_dist
+#   tools/bazel run --config=spacemit_k3 //devices/rise/spacemit/spacemit_soc:spacemit_k3_dist
 
 # Local build (disable sandboxing). Replaces the obsolete kleaf
 # config_repo label_flag, removed during the android-mainline migration.
