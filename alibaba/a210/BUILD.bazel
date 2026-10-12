@@ -158,6 +158,7 @@ ALIBABA_IN_TREE_MODULES_PATH = [
 # dependency) - just not part of upstream's official GKI module list.
 # ============================================================
 ALIBABA_SYSTEM_DLKM_EXTRA_MODULES = [
+    "drivers/bluetooth/btrtl.ko",
     "drivers/gpu/drm/vkms/vkms.ko",
 ]
 
