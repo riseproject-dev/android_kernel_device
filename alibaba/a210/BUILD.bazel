@@ -156,6 +156,8 @@ ALIBABA_IN_TREE_MODULES_PATH = [
     "sound/soc/zhihe/snd-soc-zhihe-i2s.ko",
     "sound/soc/codecs/snd-soc-es8156.ko",
     "sound/soc/codecs/snd-soc-es7210.ko",
+    "sound/soc/codecs/snd-soc-hdmi-codec.ko",
+    "drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.ko",
 ]
 
 # ============================================================
@@ -216,6 +218,8 @@ ALIBABA_VENDOR_DLKM_MODULES = [
     "snd-soc-zhihe-i2s.ko",
     "snd-soc-es8156.ko",
     "snd-soc-es7210.ko",
+    "snd-soc-hdmi-codec.ko",
+    "dw-hdmi-i2s-audio.ko",
 ]
 
 # ============================================================

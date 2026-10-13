@@ -174,3 +174,8 @@ CONFIG_SND_AUDIO_GRAPH_CARD2=m
 CONFIG_SND_SOC_ZHIHE_I2S=m
 CONFIG_SND_SOC_ES8156=m
 CONFIG_SND_SOC_ES7210=m
+
+# ============================================================
+# Audio - HDMI: I2S3 SD0 -> dw-hdmi I2S audio input
+# ============================================================
+CONFIG_DRM_DW_HDMI_I2S_AUDIO=m
