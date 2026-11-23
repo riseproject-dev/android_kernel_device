@@ -116,6 +116,7 @@ CONFIG_MMC_SDHCI_OF_DWCMSHC=m
 # Watchdog
 # ============================================================
 CONFIG_DW_WATCHDOG=m
+CONFIG_ZHIHE_WATCHDOG=m
 
 # ============================================================
 # USB 3.1 for adb (peripheral)
