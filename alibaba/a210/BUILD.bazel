@@ -128,6 +128,7 @@ ALIBABA_IN_TREE_MODULES_PATH = [
     "drivers/mmc/host/sdhci-of-dwcmshc.ko",
     "drivers/mmc/host/cqhci.ko",
     "drivers/watchdog/dw_wdt.ko",
+    "drivers/watchdog/zhihe_wdt.ko",
     "drivers/phy/zhihe/phy-zhihe-snps-usb2.ko",
     "drivers/phy/zhihe/phy-zhihe-snps-c10phy.ko",
     "drivers/i2c/busses/i2c-designware-core.ko",
@@ -184,6 +185,7 @@ ALIBABA_VENDOR_BOOT_MODULES = [
     "cqhci.ko",
     "sdhci-of-dwcmshc.ko",
     "dw_wdt.ko",
+    "zhihe_wdt.ko",
 ]
 
 # ============================================================
